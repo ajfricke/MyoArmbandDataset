@@ -43,11 +43,12 @@ def butter_highpass_filter(data, cutoff, fs, order=3):
     y = signal.lfilter(b, a, data)
     return y
 
+
 def shift_electrodes(examples, labels):
     index_normal_class = [1, 2, 6, 2]  # The normal activation of the electrodes.
     class_mean = []
     # For the classes that are relatively invariant to the highest canals activation, we get on average for a
-    # subject the most active canals for those classes
+    # subject the most active cannals for those classes
     for classe in range(3, 7):
         X_example = []
         Y_example = []
@@ -81,7 +82,7 @@ def shift_electrodes(examples, labels):
 
     # We get the mean amount of shift and round it up to get a discrete number representing how much we have to shift
     # if we consider all the canals
-    # Do the shifting only if the absolute mean is greater or equal to 0.5
+    # Do the shifting only if the absolute mean is greater or equal to 0.75
     final_shifting = np.mean(np.array(shifts_array))
     if abs(final_shifting) >= 0.5:
         final_shifting = int(np.round(final_shifting))
@@ -100,16 +101,17 @@ def shift_electrodes(examples, labels):
     return X_example, Y_example
 
 
-def read_data(path):
+def read_data(path, type):
     print("Reading Data")
     list_dataset = []
     list_labels = []
 
-    for candidate in range(12):
+
+    for candidate in range(15):
         labels = []
         examples = []
         for i in range(number_of_classes * 4):
-            data_read_from_file = np.fromfile(path+'/Male'+str(candidate)+'/training0/classe_%d.dat' % i,
+            data_read_from_file = np.fromfile(path + '/Male' + str(candidate) + '/' + type + '/classe_%d.dat' % i,
                                               dtype=np.int16)
             data_read_from_file = np.array(data_read_from_file, dtype=np.float32)
             dataset_example = format_data_to_train(data_read_from_file)
@@ -119,12 +121,11 @@ def read_data(path):
         list_dataset.append(examples)
         list_labels.append(labels)
 
-    for candidate in range(7):
+    for candidate in range(2):
         labels = []
         examples = []
         for i in range(number_of_classes * 4):
-            i=0
-            data_read_from_file = np.fromfile(path + '/Female' + str(candidate) + '/training0/classe_%d.dat' % i,
+            data_read_from_file = np.fromfile(path + '/Female' + str(candidate) + '/' + type + '/classe_%d.dat' % i,
                                               dtype=np.int16)
             data_read_from_file = np.array(data_read_from_file, dtype=np.float32)
             dataset_example = format_data_to_train(data_read_from_file)

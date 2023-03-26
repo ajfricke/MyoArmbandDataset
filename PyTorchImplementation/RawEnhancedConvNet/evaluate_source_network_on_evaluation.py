@@ -8,6 +8,7 @@ import torch
 from torch.autograd import Variable
 import time
 import copy
+from tqdm import tqdm
 
 
 def confusion_matrix(pred, Y, number_class=7):
@@ -48,7 +49,7 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
     accuracy_test0 = []
     accuracy_test1 = []
     for j in range(17):
-        print("CURRENT DATASET : ", j)
+        #print("CURRENT DATASET : ", j)
         examples_personne_training = []
         labels_gesture_personne_training = []
         
@@ -67,7 +68,7 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
             X_test_1.extend(examples_test1[j][k])
             Y_test_1.extend(labels_test_1[j][k])
         
-        print(np.shape(examples_personne_training))
+        #print(np.shape(examples_personne_training))
         examples_personne_scrambled, labels_gesture_personne_scrambled = scramble(examples_personne_training,
                                                                                   labels_gesture_personne_training)
         valid_examples = examples_personne_scrambled[0:int(len(examples_personne_scrambled) * 0.1)]
@@ -121,7 +122,7 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
             _, predicted = torch.max(outputs_test_0.data, 1)
             correct_prediction_test_0 += (predicted.cpu().numpy() == ground_truth_test_0.data.cpu().numpy()).sum()
             total += ground_truth_test_0.size(0)
-        print("ACCURACY TEST_0 FINAL : %.3f %%" % (100 * float(correct_prediction_test_0) / float(total)))
+        #print("ACCURACY TEST_0 FINAL : %.3f %%" % (100 * float(correct_prediction_test_0) / float(total)))
         accuracy_test0.append(100 * float(correct_prediction_test_0) / float(total))
 
         test_1_loader = torch.utils.data.DataLoader(test_1, batch_size=256, shuffle=False)
@@ -136,11 +137,11 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
             _, predicted = torch.max(outputs_test_1.data, 1)
             correct_prediction_test_1 += (predicted.cpu().numpy() == ground_truth_test_1.data.cpu().numpy()).sum()
             total += ground_truth_test_1.size(0)
-        print("ACCURACY TEST_1 FINAL : %.3f %%" % (100 * float(correct_prediction_test_1) / float(total)))
+        #print("ACCURACY TEST_1 FINAL : %.3f %%" % (100 * float(correct_prediction_test_1) / float(total)))
         accuracy_test1.append(100 * float(correct_prediction_test_1) / float(total))
         
-    print("AVERAGE ACCURACY TEST 0 %.3f" % np.array(accuracy_test0).mean())
-    print("AVERAGE ACCURACY TEST 1 %.3f" % np.array(accuracy_test1).mean())
+    #print("AVERAGE ACCURACY TEST 0 %.3f" % np.array(accuracy_test0).mean())
+    #print("AVERAGE ACCURACY TEST 1 %.3f" % np.array(accuracy_test1).mean())
     return accuracy_test0, accuracy_test1
 
 
@@ -156,8 +157,8 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
     
     for epoch in range(num_epochs):
         epoch_start = time.time()
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
+        #print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        #print('-' * 10)
         
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
@@ -204,29 +205,29 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
             epoch_loss = running_loss / total
             epoch_acc = running_corrects.item() / total
             
-            print('{} Loss: {} Acc: {}'.format(phase, epoch_loss, epoch_acc))
+            #print('{} Loss: {} Acc: {}'.format(phase, epoch_loss, epoch_acc))
             
             # deep copy the model
             if phase == 'val':
                 scheduler.step(epoch_loss)
                 if epoch_loss + precision < best_loss:
-                    print("New best validation loss:", epoch_loss)
+                    #print("New best validation loss:", epoch_loss)
                     best_loss = epoch_loss
                     best_weights = copy.deepcopy(cnn.state_dict())
                     patience = patience_increase + epoch
-        print("Epoch {} of {} took {:.3f}s".format(
-            epoch + 1, num_epochs, time.time() - epoch_start))
+        #print("Epoch {} of {} took {:.3f}s".format(
+            #epoch + 1, num_epochs, time.time() - epoch_start))
         if epoch > patience:
             break
         if epoch >= 25:
             break
-    print()
+    #print()
     
     time_elapsed = time.time() - since
     
-    print('Training complete in {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
-    print('Best val loss: {:4f}'.format(best_loss))
+    # print('Training complete in {:.0f}m {:.0f}s'.format(
+    #     time_elapsed // 60, time_elapsed % 60))
+    # print('Best val loss: {:4f}'.format(best_loss))
     # load best model weights
     cnn.load_state_dict(copy.deepcopy(best_weights))
     cnn.eval()
@@ -238,32 +239,32 @@ if __name__ == '__main__':
     
     # Comment between here
     
-    examples, labels = load_evaluation_dataset.read_data('../../EvaluationDataset', type="training0")
+    examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="training0")
     datasets = [examples, labels]
 
-    np.save("formatted_datasets/saved_evaluation_dataset_training.npy", datasets)
+    np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_training.npy", datasets)
     
-    examples, labels = load_evaluation_dataset.read_data('../../EvaluationDataset', type="Test0")
+    examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="Test0")
     datasets = [examples, labels]
 
-    np.save("formatted_datasets/saved_evaluation_dataset_test0.npy", datasets)
+    np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test0.npy", datasets)
     
-    examples, labels = load_evaluation_dataset.read_data('../../EvaluationDataset', type="Test1")
+    examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="Test1")
     datasets = [examples, labels]
 
-    np.save("formatted_datasets/saved_evaluation_dataset_test1.npy", datasets)
+    np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test1.npy", datasets)
     
     # And here if the pre-training dataset was already processed and saved
     
     # Comment between here
     
-    datasets_training = np.load("formatted_datasets/saved_evaluation_dataset_training.npy", encoding="bytes")
+    datasets_training = np.load("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_training.npy", encoding="bytes", allow_pickle=True)
     examples_training, labels_training = datasets_training
     
-    datasets_test0 = np.load("formatted_datasets/saved_evaluation_dataset_test0.npy", encoding="bytes")
+    datasets_test0 = np.load("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test0.npy", encoding="bytes", allow_pickle=True)
     examples_test0, labels_test0 = datasets_test0
     
-    datasets_test1 = np.load("formatted_datasets/saved_evaluation_dataset_test1.npy", encoding="bytes")
+    datasets_test1 = np.load("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test1.npy", encoding="bytes", allow_pickle=True)
     examples_test1, labels_test1 = datasets_test1
     
     # And here if the pre-training of the network was already completed.
@@ -272,9 +273,10 @@ if __name__ == '__main__':
     array_validation_error = []
     # learning_rate = 0.002335721469090121
     for training_cycle in range(1, 5):
+        print(f"\n--- TRAINING CYCLE {training_cycle} of 4 ---")
         test_0 = []
         test_1 = []
-        for i in range(20):
+        for i in tqdm(range(20)):
             accuracy_test0, accuracy_test1 = calculate_fitness(examples_training, labels_training, examples_test0,
                                                                labels_test0, examples_test1, labels_test1,
                                                                learning_rate=0.002335721469090121,
@@ -282,17 +284,17 @@ if __name__ == '__main__':
     
             test_0.append(accuracy_test0)
             test_1.append(accuracy_test1)
-            print("TEST 0 SO FAR: ", test_0)
-            print("TEST 1 SO FAR: ", accuracy_test1)
-            print("CURRENT AVERAGE : ", (np.mean(test_0)+np.mean(test_1))/2.)
+        #     print("TEST 0 SO FAR: ", test_0)
+        #     print("TEST 1 SO FAR: ", accuracy_test1)
+        #     print("CURRENT AVERAGE : ", (np.mean(test_0)+np.mean(test_1))/2.)
         
-        print("ACCURACY FINAL TEST 0: ", test_0)
-        print("ACCURACY FINAL TEST 0: ", np.mean(test_0))
-        print("ACCURACY FINAL TEST 1: ", test_1)
-        print("ACCURACY FINAL TEST 1: ", np.mean(test_1))
-        print("ACCURACY FINAL: ", (np.mean(test_0)+np.mean(test_1))/2.)
+        # print("ACCURACY FINAL TEST 0: ", test_0)
+        # print("ACCURACY FINAL TEST 0: ", np.mean(test_0))
+        # print("ACCURACY FINAL TEST 1: ", test_1)
+        # print("ACCURACY FINAL TEST 1: ", np.mean(test_1))
+        # print("ACCURACY FINAL: ", (np.mean(test_0)+np.mean(test_1))/2.)
         
-        with open("results/evaluation_dataset_convnet_enhanced.txt", "a") as myfile:
+        with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/evaluation_dataset_convnet_enhanced.txt", "a") as myfile:
             myfile.write("ConvNet Training Cycle : "+str(training_cycle)+"\n\n")
             myfile.write("Test 0: \n")
             myfile.write(str(test_0) + '\n')

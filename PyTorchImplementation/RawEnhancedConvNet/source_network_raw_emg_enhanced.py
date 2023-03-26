@@ -28,9 +28,9 @@ class Net(nn.Module):
         
         self.initialize_weights()
         
-        print(self)
+        #print(self)
         
-        print("Number Parameters: ", self.get_n_params())
+        #print("Number Parameters: ", self.get_n_params())
     
     def get_n_params(self):
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
