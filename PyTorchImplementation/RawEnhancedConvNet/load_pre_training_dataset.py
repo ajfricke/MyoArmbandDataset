@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import signal
 
+from tqdm import tqdm
+
 number_of_vector_per_example = 52
 number_of_canals = 8
 number_of_classes = 7
@@ -107,7 +109,7 @@ def read_data(path, type):
     list_labels = []
 
 
-    for candidate in range(15):
+    for candidate in tqdm(range(11)):
         labels = []
         examples = []
         for i in range(number_of_classes * 4):
@@ -121,7 +123,7 @@ def read_data(path, type):
         list_dataset.append(examples)
         list_labels.append(labels)
 
-    for candidate in range(2):
+    for candidate in tqdm(range(9)):
         labels = []
         examples = []
         for i in range(number_of_classes * 4):

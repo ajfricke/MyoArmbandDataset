@@ -10,6 +10,8 @@ from scipy.stats import mode
 import copy
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def scramble(examples, labels, second_labels=[]):
     random_vec = np.arange(len(labels))
     np.random.shuffle(random_vec)
@@ -73,7 +75,7 @@ def calculate_pre_training(examples, labels):
         print("Shape training : ", np.shape(examples_personne_scrambled))
         print("Shape valid : ", np.shape(examples_personne_scrambled_valid))
 
-    cnn = Wavelet_CNN_Target_Network.SourceNetwork(number_of_class=7, dropout_rate=.35).cuda()
+    cnn = Wavelet_CNN_Target_Network.SourceNetwork(number_of_class=7, dropout_rate=.35).to(device)
 
     criterion = nn.NLLLoss(size_average=False)
     optimizer = optim.Adam(cnn.parameters(), lr=0.0404709)
@@ -136,7 +138,7 @@ def pre_train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epoch
                     # get the inputs
                     inputs, labels = data
 
-                    inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+                    inputs, labels = Variable(inputs.to(device)), Variable(labels.to(device))
 
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -154,7 +156,7 @@ def pre_train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epoch
                     else:
                         cnn.eval()
 
-                        accumulated_predicted = Variable(torch.zeros(len(inputs), 7)).cuda()
+                        accumulated_predicted = Variable(torch.zeros(len(inputs), 7)).to(device)
                         loss_intermediary = 0.
                         total_sub_pass = 0
                         for repeat in range(20):
@@ -272,7 +274,7 @@ def calculate_fitness(examples_training, labels_training, examples_test_0, label
         pre_trained_weights = torch.load('best_pre_train_weights_target_wavelet.pt')
 
         cnn = Wavelet_CNN_Target_Network.TargetNetwork(number_of_class=7,
-                                                       weights_pre_trained_cnn=pre_trained_weights).cuda()
+                                                       weights_pre_trained_cnn=pre_trained_weights).to(device)
 
         criterion = nn.NLLLoss(size_average=False)
         optimizer = optim.Adam(filter(lambda p: p.requires_grad, cnn.parameters()), lr=0.0404709)
@@ -290,7 +292,7 @@ def calculate_fitness(examples_training, labels_training, examples_test_0, label
         for k, data_test_0 in enumerate(test_0_loader, 0):
             # get the inputs
             inputs_test_0, ground_truth_test_0 = data_test_0
-            inputs_test_0, ground_truth_test_0 = Variable(inputs_test_0.cuda()), Variable(ground_truth_test_0.cuda())
+            inputs_test_0, ground_truth_test_0 = Variable(inputs_test_0.to(device)), Variable(ground_truth_test_0.to(device))
 
             concat_input = inputs_test_0
             for i in range(20):
@@ -308,7 +310,7 @@ def calculate_fitness(examples_training, labels_training, examples_test_0, label
         for k, data_test_1 in enumerate(test_1_loader, 0):
             # get the inputs
             inputs_test_1, ground_truth_test_1 = data_test_1
-            inputs_test_1, ground_truth_test_1 = Variable(inputs_test_1.cuda()), Variable(ground_truth_test_1.cuda())
+            inputs_test_1, ground_truth_test_1 = Variable(inputs_test_1.to(device)), Variable(ground_truth_test_1.to(device))
 
             concat_input = inputs_test_1
             for i in range(20):
@@ -356,7 +358,7 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
                 # get the inputs
                 inputs, labels = data
 
-                inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+                inputs, labels = Variable(inputs.to(device)), Variable(labels.to(device))
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -374,7 +376,7 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
                 else:
                     cnn.eval()
 
-                    accumulated_predicted = Variable(torch.zeros(len(inputs), 7)).cuda()
+                    accumulated_predicted = Variable(torch.zeros(len(inputs), 7)).to(device)
                     loss_intermediary = 0.
                     total_sub_pass = 0
                     for repeat in range(20):

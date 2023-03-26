@@ -8,6 +8,9 @@ from torch.autograd import Variable
 import time
 from scipy.stats import mode
 
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def confusion_matrix(pred, Y, number_class=7):
     confusion_matrice = []
     for x in range(0, number_class):
@@ -96,7 +99,7 @@ def calculate_fitness(examples_training, labels_training, examples_test_0, label
         test_1_loader = torch.utils.data.DataLoader(test_1, batch_size=1, shuffle=False)
 
         cnn = Wavelet_CNN_Source_Network.Net(number_of_class=7, batch_size=128, number_of_channel=12,
-                                             learning_rate=0.0404709, dropout=.5).cuda()
+                                             learning_rate=0.0404709, dropout=.5).to(device)
 
         criterion = nn.NLLLoss(size_average=False)
         optimizer = optim.Adam(cnn.parameters(), lr=0.0404709)
@@ -114,7 +117,7 @@ def calculate_fitness(examples_training, labels_training, examples_test_0, label
         for k, data_test_0 in enumerate(test_0_loader, 0):
             # get the inputs
             inputs_test_0, ground_truth_test_0 = data_test_0
-            inputs_test_0, ground_truth_test_0 = Variable(inputs_test_0.cuda()), Variable(ground_truth_test_0.cuda())
+            inputs_test_0, ground_truth_test_0 = Variable(inputs_test_0.to(device)), Variable(ground_truth_test_0.to(device))
 
             concat_input = inputs_test_0
             for i in range(20):
@@ -132,7 +135,7 @@ def calculate_fitness(examples_training, labels_training, examples_test_0, label
         for k, data_test_1 in enumerate(test_1_loader, 0):
             # get the inputs
             inputs_test_1, ground_truth_test_1 = data_test_1
-            inputs_test_1, ground_truth_test_1 = Variable(inputs_test_1.cuda()), Variable(ground_truth_test_1.cuda())
+            inputs_test_1, ground_truth_test_1 = Variable(inputs_test_1.to(device)), Variable(ground_truth_test_1.to(device))
 
             concat_input = inputs_test_1
             for i in range(20):
@@ -177,7 +180,7 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
                 # get the inputs
                 inputs, labels = data
 
-                inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+                inputs, labels = Variable(inputs.to(device)), Variable(labels.to(device))
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -195,7 +198,7 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
                 else:
                     cnn.eval()
 
-                    accumulated_predicted = Variable(torch.zeros(len(inputs), 7)).cuda()
+                    accumulated_predicted = Variable(torch.zeros(len(inputs), 7)).to(device)
                     loss_intermediary = 0.
                     total_sub_pass = 0
                     for repeat in range(20):

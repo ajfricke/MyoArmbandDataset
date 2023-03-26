@@ -30,9 +30,9 @@ class SourceNetwork(nn.Module):
     
         self.initialize_weights()
     
-        print(self)
+        #print(self)
     
-        print("Number Parameters: ", self.get_n_params())
+        #print("Number Parameters: ", self.get_n_params())
 
     def get_n_params(self):
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
@@ -97,7 +97,7 @@ class TargetNetwork(nn.Module):
         pre_trained_model = SourceNetwork(number_of_class=7, dropout_rate=dropout)
         self._added_source_network_to_graph = nn.Sequential(*list(pre_trained_model.children()))
         
-        print("Number Parameters: ", self.get_n_params())
+        #print("Number Parameters: ", self.get_n_params())
 
         # Load the pre-trained model weights (Source Network)
         pre_trained_model.load_state_dict(weights_pre_trained_convnet)
@@ -110,7 +110,7 @@ class TargetNetwork(nn.Module):
                     param.requires_grad = False
 
         self._source_network = pre_trained_model._modules
-        print(self._source_network.keys())
+        #print(self._source_network.keys())
         
     def get_n_params(self):
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
