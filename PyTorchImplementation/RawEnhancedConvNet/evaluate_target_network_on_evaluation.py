@@ -1,6 +1,7 @@
 import numpy as np
 import copy
 import time
+import os
 
 import torch
 from torch.utils.data import TensorDataset
@@ -13,6 +14,8 @@ import load_pre_training_dataset
 import load_evaluation_dataset
 
 from tqdm import tqdm
+
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, balanced_accuracy_score, accuracy_score, f1_score
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -39,7 +42,7 @@ def calculate_pre_training(examples, labels):
     list_train_dataloader = []
     list_validation_dataloader = []
     human_number = 0
-    for j in range(19):
+    for j in tqdm(range(19)):
         examples_personne_training = []
         labels_gesture_personne_training = []
         labels_human_personne_training = []
@@ -82,7 +85,7 @@ def calculate_pre_training(examples, labels):
 
     cnn = target_network_raw_emg_enhanced.SourceNetwork(number_of_class=7, dropout_rate=.35).to(device)
 
-    criterion = nn.CrossEntropyLoss(size_average=False)
+    criterion = nn.CrossEntropyLoss(reduction="sum")
     optimizer = optim.Adam(cnn.parameters(), lr=0.002335721469090121)
     precision = 1e-8
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, mode='min', factor=.2, patience=15,
@@ -112,7 +115,7 @@ def pre_train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epoch
 
     patience = 30
     patience_increase = 30
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs)):
         epoch_start = time.time()
         # print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         # print('-' * 10)
@@ -215,7 +218,22 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
                       learning_rate=.1, training_cycle=4):
     accuracy_test0 = []
     accuracy_test1 = []
-    for j in range(17):
+
+    accuracy1_test0 = []
+    bal_acc_test0 = []
+    precision_test0 = []
+    recall_test0 = []
+    f1_test0 = []
+    conf_mat_test0 = []
+
+    accuracy1_test1 = []
+    bal_acc_test1 = []
+    precision_test1 = []
+    recall_test1 = []
+    f1_test1 = []
+    conf_mat_test1 = []
+
+    for j in tqdm(range(17)):
         #print("CURRENT DATASET : ", j)
         examples_personne_training = []
         labels_gesture_personne_training = []
@@ -304,7 +322,7 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
                                                                 weights_pre_trained_convnet=pre_trained_weights,
                                                                 dropout=.5).to(device)
             
-            criterion = nn.CrossEntropyLoss(size_average=False)
+            criterion = nn.CrossEntropyLoss(reduction="sum")
             optimizer = optim.Adam(cnn.parameters(), lr=learning_rate)
             
             precision = 1e-6
@@ -326,6 +344,8 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
             test_1 = TensorDataset(torch.from_numpy(np.array(X_test_1, dtype=np.float32)),
                                    torch.from_numpy(np.array(Y_test_1, dtype=np.int64)))
             
+            test_0_predicted = []
+            test_0_labels = []
             test_0_loader = torch.utils.data.DataLoader(test_0, batch_size=256, shuffle=False)
             total = 0
             correct_prediction_test_0 = 0
@@ -336,11 +356,23 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
                 
                 outputs_test_0 = cnn(inputs_test_0)
                 _, predicted = torch.max(outputs_test_0.data, 1)
+
+                test_0_predicted.extend(predicted.cpu().numpy())
+                test_0_labels.extend(ground_truth_test_0.data.cpu().numpy())
+
                 correct_prediction_test_0 += (predicted.cpu().numpy() == ground_truth_test_0.data.cpu().numpy()).sum()
                 total += ground_truth_test_0.size(0)
-            #print("ACCURACY TEST_0 FINAL : %.3f %%" % (100 * float(correct_prediction_test_0) / float(total)))
+
             accuracy_test0.append(100 * float(correct_prediction_test_0) / float(total))
+            accuracy1_test0.append(accuracy_score(test_0_labels, test_0_predicted))
+            bal_acc_test0.append(balanced_accuracy_score(test_0_labels, test_0_predicted))
+            precision_test0.append(precision_score(test_0_labels, test_0_predicted, average='macro'))
+            recall_test0.append(recall_score(test_0_labels, test_0_predicted, average='macro'))
+            f1_test0.append(f1_score(test_0_labels, test_0_predicted, average='macro'))
+            conf_mat_test0.append(confusion_matrix(test_0_labels, test_0_predicted))
             
+            test_1_predicted = []
+            test_1_labels = []
             test_1_loader = torch.utils.data.DataLoader(test_1, batch_size=256, shuffle=False)
             total = 0
             correct_prediction_test_1 = 0
@@ -351,14 +383,24 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
                 
                 outputs_test_1 = cnn(inputs_test_1)
                 _, predicted = torch.max(outputs_test_1.data, 1)
+
+                test_1_predicted.extend(predicted.cpu().numpy())
+                test_1_labels.extend(ground_truth_test_1.data.cpu().numpy())
+
                 correct_prediction_test_1 += (predicted.cpu().numpy() == ground_truth_test_1.data.cpu().numpy()).sum()
                 total += ground_truth_test_1.size(0)
-            #print("ACCURACY TEST_1 FINAL : %.3f %%" % (100 * float(correct_prediction_test_1) / float(total)))
+
             accuracy_test1.append(100 * float(correct_prediction_test_1) / float(total))
-    
-    # print("AVERAGE ACCURACY TEST 0 %.3f" % np.array(accuracy_test0).mean())
-    # print("AVERAGE ACCURACY TEST 1 %.3f" % np.array(accuracy_test1).mean())
-    return accuracy_test0, accuracy_test1
+            accuracy1_test1.append(accuracy_score(test_1_labels, test_1_predicted))
+            bal_acc_test1.append(balanced_accuracy_score(test_1_labels, test_1_predicted))
+            precision_test1.append(precision_score(test_1_labels, test_1_predicted, average='macro'))
+            recall_test1.append(recall_score(test_1_labels, test_1_predicted, average='macro'))
+            f1_test1.append(f1_score(test_1_labels, test_1_predicted, average='macro'))
+            conf_mat_test1.append(confusion_matrix(test_1_labels, test_1_predicted))
+
+    return (accuracy1_test0, accuracy1_test1, bal_acc_test0, bal_acc_test1, 
+            precision_test0, precision_test1, recall_test0, recall_test1, f1_test0, f1_test1,
+            conf_mat_test0, conf_mat_test1)
 
 
 def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=500, precision=1e-8):
@@ -448,51 +490,42 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
     return cnn
 
 if __name__ == '__main__':
-    # Change the path of the Evaluation and PreTraining Dataset to where you have it downloaded
-    
-    # Comment between here
+    print('CALCULATING PRE TRAINING')
+    if "saved_evaluation_dataset_pre_training.npy" not in os.listdir("/content/drive/My Drive/544_Final_Project/"):
+        print("Doing pre training")
+        examples, labels = load_pre_training_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PreTrainingDataset', type="training0")
+        datasets = [examples, labels]
+        np.save("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_pre_training.npy", datasets)
 
-    examples, labels = load_pre_training_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PreTrainingDataset', type="training0")
-    datasets = [examples, labels]
-
-    np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_pre_training_dataset_spectrogram.npy", datasets)
-
-    # And here if the pre-training dataset was already processed and saved
-    
-    # Comment between here
-    
-    datasets_pre_training = np.load("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_pre_training_dataset_spectrogram.npy", encoding="bytes", allow_pickle=True)
+    datasets_pre_training = np.load("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_pre_training.npy", encoding="bytes", allow_pickle=True)
     examples_pre_training, labels_pre_training = datasets_pre_training
+
     calculate_pre_training(examples_pre_training, labels_pre_training)
+    print('FINISHED PRE TRAINING')
     
-    # Comment between here
+    if "saved_evaluation_dataset_training.npy" not in os.listdir("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/"):
+        examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="training0")
+        datasets = [examples, labels]
+        np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_training.npy", datasets)
     
-    examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="training0")
-    datasets = [examples, labels]
-
-    np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_training.npy", datasets)
+    if "saved_evaluation_dataset_test0.npy" not in os.listdir("/content/drive/My Drive/544_Final_Project/"):
+        examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="Test0")
+        datasets = [examples, labels]
+        np.save("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_test0.npy", datasets)
     
-    examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="Test0")
-    datasets = [examples, labels]
-
-    np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test0.npy", datasets)
+    if "saved_evaluation_dataset_test1.npy" not in os.listdir("/content/drive/My Drive/544_Final_Project"):
+        examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="Test1")
+        datasets = [examples, labels]
+        np.save("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_test1.npy", datasets)
     
-    examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="Test1")
-    datasets = [examples, labels]
-
-    np.save("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test1.npy", datasets)
     
-    # And here if the pre-training dataset was already processed and saved
-
-    # Comment between here
-
-    datasets_training = np.load("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_training.npy", encoding="bytes", allow_pickle=True)
+    datasets_training = np.load("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_training.npy", encoding="bytes", allow_pickle=True)
     examples_training, labels_training = datasets_training
     
-    datasets_test0 = np.load("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test0.npy", encoding="bytes", allow_pickle=True)
+    datasets_test0 = np.load("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_test0.npy", encoding="bytes", allow_pickle=True)
     examples_test0, labels_test0 = datasets_test0
     
-    datasets_test1 = np.load("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/formatted_datasets/saved_evaluation_dataset_test1.npy", encoding="bytes", allow_pickle=True)
+    datasets_test1 = np.load("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_test1.npy", encoding="bytes", allow_pickle=True)
     examples_test1, labels_test1 = datasets_test1
 
     # And here if the pre-training of the network was already completed.
@@ -501,41 +534,104 @@ if __name__ == '__main__':
     array_validation_error = []
     # learning_rate=0.002335721469090121 (for network enhanced)
 
-    with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/evaluation_dataset_TARGET_convnet_enhanced.txt", "a") as myfile:
+    with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/cnn_evaluation_dataset_target_patient_dependent.txt", "a") as myfile:
         myfile.write("Test")
-    for training_cycle in range(1, 5):
+    for training_cycle in range(4, 5):
         print(f"\n--- TRAINING CYCLE {training_cycle} of 4 ---")
-        test_0 = []
-        test_1 = []
-        for i in tqdm(range(20)):
-            accuracy_test0, accuracy_test1 = calculate_fitness(examples_training, labels_training, examples_test0,
-                                                               labels_test0, examples_test1, labels_test1,
-                                                               learning_rate=0.002335721469090121,
-                                                               training_cycle=training_cycle)
+        accuracy1_test0 = []
+        bal_acc_test0 = []
+        precision_test0 = []
+        recall_test0 = []
+        f1_test0 = []
+        conf_mat_test0 = []
+
+        accuracy1_test1 = []
+        bal_acc_test1 = []
+        precision_test1 = []
+        recall_test1 = []
+        f1_test1 = []
+        conf_mat_test1 = []
+        for i in tqdm(range(3)):
+            metrics = calculate_fitness(examples_training, labels_training, examples_test0,
+                                        labels_test0, examples_test1, labels_test1,
+                                        learning_rate=0.002335721469090121,
+                                        training_cycle=training_cycle)
         
-            test_0.append(accuracy_test0)
-            test_1.append(accuracy_test1)
-        #     print("TEST 0 SO FAR: ", test_0)
-        #     print("TEST 1 SO FAR: ", test_1)
-        #     print("CURRENT AVERAGE : ", (np.mean(test_0) + np.mean(test_1)) / 2.)
+            accuracy1_test0.append(metrics[0])
+            bal_acc_test0.append(metrics[2])
+            precision_test0.append(metrics[4])
+            recall_test0.append(metrics[6])
+            f1_test0.append(metrics[8])
+            conf_mat_test0.append(metrics[10])
+
+            accuracy1_test1.append(metrics[1])
+            bal_acc_test1.append(metrics[3])
+            precision_test1.append(metrics[5])
+            recall_test1.append(metrics[7])
+            f1_test1.append(metrics[9])
+            conf_mat_test1.append(metrics[11])
     
-        # print("ACCURACY FINAL TEST 0: ", test_0)
-        # print("ACCURACY FINAL TEST 0: ", np.mean(test_0))
-        # print("ACCURACY FINAL TEST 1: ", test_1)
-        # print("ACCURACY FINAL TEST 1: ", np.mean(test_1))
-        # print("ACCURACY FINAL: ", (np.mean(test_0) + np.mean(test_1)) / 2.)
-    
-        with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/evaluation_dataset_TARGET_convnet_enhanced.txt", "a") as myfile:
+        with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/cnn_evaluation_dataset_target_patient_dependent.txt", "a") as myfile:
             myfile.write("ConvNet Training Cycle : " + str(training_cycle) + "\n\n")
-            myfile.write("Test 0: \n")
-            myfile.write(str(test_0) + '\n')
-            myfile.write(str(np.mean(test_0, axis=0)) + '\n')
-            myfile.write(str(np.mean(test_0)) + '\n')
+            myfile.write("TEST 0: \n")
+            myfile.write("Accuracy: \n")
+            #myfile.write(str(accuracy1_test0) + '\n')
+            myfile.write(str(np.mean(accuracy1_test0, axis=0)) + '\n')
+            myfile.write(str(np.mean(accuracy1_test0)) + '\n')
+
+            myfile.write("Balanced Accuracy: \n")
+            myfile.write(str(bal_acc_test0) + '\n')
+            #myfile.write(str(np.mean(bal_acc_test0, axis=0)) + '\n')
+            myfile.write(str(np.mean(bal_acc_test0)) + '\n')
+
+            myfile.write("Precision: \n")
+            #myfile.write(str(precision_test0) + '\n')
+            myfile.write(str(np.mean(precision_test0, axis=0)) + '\n')
+            myfile.write(str(np.mean(precision_test0)) + '\n')
+
+            myfile.write("Recall: \n")
+            #myfile.write(str(recall_test0) + '\n')
+            myfile.write(str(np.mean(recall_test0, axis=0)) + '\n')
+            myfile.write(str(np.mean(recall_test0)) + '\n')
+
+            myfile.write("F1 Score: \n")
+            #myfile.write(str(f1_test0) + '\n')
+            myfile.write(str(np.mean(f1_test0, axis=0)) + '\n')
+            myfile.write(str(np.mean(f1_test0)) + '\n')
+
+            myfile.write("Confusion Matrices: \n")
+            #myfile.write(str(conf_mat_test0) + '\n')
+            myfile.write(str(np.array(np.mean(conf_mat_test0, axis=0))) + '\n')
+            myfile.write(str(np.array(np.mean(np.mean(conf_mat_test0, axis=0)), axis=0)) + '\n')
+
             myfile.write("Test 1: \n")
-            myfile.write(str(test_1) + '\n')
-            myfile.write(str(np.mean(test_1, axis=0)) + '\n')
-            myfile.write(str(np.mean(test_1)) + '\n')
-            myfile.write("Test Mean: \n")
-            myfile.write(str(np.mean(test_0, axis=0)) + '\n')
-            myfile.write(str((np.mean(test_0) + np.mean(test_1)) / 2.) + '\n')
+            myfile.write("Accuracy: \n")
+            #myfile.write(str(accuracy1_test1) + '\n')
+            myfile.write(str(np.mean(accuracy1_test1, axis=0)) + '\n')
+            myfile.write(str(np.mean(accuracy1_test1)) + '\n')
+
+            myfile.write("Balanced Accuracy: \n")
+            #myfile.write(str(bal_acc_test1) + '\n')
+            myfile.write(str(np.mean(bal_acc_test1, axis=0)) + '\n')
+            myfile.write(str(np.mean(bal_acc_test1)) + '\n')
+
+            myfile.write("Precision: \n")
+            #myfile.write(str(precision_test1) + '\n')
+            myfile.write(str(np.mean(precision_test1, axis=0)) + '\n')
+            myfile.write(str(np.mean(precision_test1)) + '\n')
+
+            myfile.write("Recall: \n")
+            #myfile.write(str(recall_test1) + '\n')
+            myfile.write(str(np.mean(recall_test1, axis=0)) + '\n')
+            myfile.write(str(np.mean(recall_test1)) + '\n')
+
+            myfile.write("F1 Score: \n")
+            #myfile.write(str(f1_test1) + '\n')
+            myfile.write(str(np.mean(f1_test1, axis=0)) + '\n')
+            myfile.write(str(np.mean(f1_test1)) + '\n')
+
+            myfile.write("Confusion Matrices: \n")
+            #myfile.write(str(conf_mat_test1) + '\n')
+            myfile.write(str(np.array(np.mean(conf_mat_test1, axis=0))) + '\n')
+            myfile.write(str(np.array(np.mean(np.mean(conf_mat_test1, axis=0))), axis=0) + '\n')
             myfile.write("\n\n\n")

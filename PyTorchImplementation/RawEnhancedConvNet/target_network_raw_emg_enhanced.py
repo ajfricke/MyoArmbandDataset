@@ -41,16 +41,16 @@ class SourceNetwork(nn.Module):
 
     def init_weights(self):
         for m in self.modules():
-            torch.nn.init.kaiming_normal(m.weight)
+            nn.init.kaiming_normal_(m.weight)
             m.bias.data.zero_()
 
     def initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                torch.nn.init.kaiming_normal_(m.weight)
+                nn.init.kaiming_normal_(m.weight)
                 m.bias.data.zero_()
             elif isinstance(m, nn.Linear):
-                torch.nn.init.kaiming_normal_(m.weight)
+                nn.init.kaiming_normal_(m.weight)
                 m.bias.data.zero_()
 
     def forward(self, x):
@@ -120,10 +120,10 @@ class TargetNetwork(nn.Module):
     def initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                torch.nn.init.kaiming_normal(m.weight)
+                nn.init.kaiming_normal_(m.weight)
                 m.bias.data.zero_()
             elif isinstance(m, nn.Linear):
-                torch.nn.init.kaiming_normal(m.weight)
+                nn.init.kaiming_normal_(m.weight)
                 m.bias.data.zero_()
 
     def forward(self, x):

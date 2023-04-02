@@ -14,6 +14,7 @@ class Net(nn.Module):
         
         self._conv2 = nn.Conv2d(32, 64, kernel_size=(3, 5))
         self._pool2 = nn.MaxPool2d(kernel_size=(1, 3))
+        # Add LSTM
         self._batch_norm2 = nn.BatchNorm2d(64)
         self._prelu2 = nn.PReLU(64)
         self._dropout2 = nn.Dropout2d(.5)
@@ -56,6 +57,7 @@ class Net(nn.Module):
         pool1 = self._pool1(conv1)
         conv2 = self._dropout2(self._prelu2(self._batch_norm2(self._conv2(pool1))))
         pool2 = self._pool2(conv2)
+        # add LSTM
         flatten_tensor = pool2.view(-1, 1024)
         fc1 = self._dropout3(self._prelu3(self._batch_norm3(self._fc1(flatten_tensor))))
         output = self._output(fc1)
