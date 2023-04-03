@@ -211,7 +211,7 @@ def pre_train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epoch
     # print('Best val loss: {:4f}'.format(best_loss))
 
     # Save the best weights found to file
-    torch.save(best_weights, '/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/convnet_weights/best_pre_train_weights_target_raw.pt')
+    torch.save(best_weights, '/content/drive/My Drive/544_Final_Project/best_pre_train_weights_target_raw.pt')
 
 
 def calculate_fitness(examples_training, labels_training, examples_test0, labels_test0, examples_test1, labels_test_1,
@@ -317,7 +317,7 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
             trainloader = torch.utils.data.DataLoader(train, batch_size=256, shuffle=True, drop_last=True)
             validationloader = torch.utils.data.DataLoader(validation, batch_size=128, shuffle=True, drop_last=True)
     
-            pre_trained_weights = torch.load('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/convnet_weights/best_pre_train_weights_target_raw.pt')
+            pre_trained_weights = torch.load('/content/drive/My Drive/544_Final_Project/best_pre_train_weights_target_raw.pt')
             cnn = target_network_raw_emg_enhanced.TargetNetwork(number_of_class=7,
                                                                 weights_pre_trained_convnet=pre_trained_weights,
                                                                 dropout=.5).to(device)
@@ -490,18 +490,19 @@ def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=50
     return cnn
 
 if __name__ == '__main__':
-    print('CALCULATING PRE TRAINING')
-    if "saved_evaluation_dataset_pre_training.npy" not in os.listdir("/content/drive/My Drive/544_Final_Project/"):
-        print("Doing pre training")
-        examples, labels = load_pre_training_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PreTrainingDataset', type="training0")
-        datasets = [examples, labels]
-        np.save("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_pre_training.npy", datasets)
+    if 'best_pre_train_weights_target_raw.pt' not in os.listdir('/content/drive/My Drive/544_Final_Project/'):
+        print('CALCULATING PRE TRAINING')
+        if "saved_evaluation_dataset_pre_training.npy" not in os.listdir("/content/drive/My Drive/544_Final_Project/"):
+            print("Doing pre training")
+            examples, labels = load_pre_training_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PreTrainingDataset', type="training0")
+            datasets = [examples, labels]
+            np.save("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_pre_training.npy", datasets)
 
-    datasets_pre_training = np.load("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_pre_training.npy", encoding="bytes", allow_pickle=True)
-    examples_pre_training, labels_pre_training = datasets_pre_training
+        datasets_pre_training = np.load("/content/drive/My Drive/544_Final_Project/saved_evaluation_dataset_pre_training.npy", encoding="bytes", allow_pickle=True)
+        examples_pre_training, labels_pre_training = datasets_pre_training
 
-    calculate_pre_training(examples_pre_training, labels_pre_training)
-    print('FINISHED PRE TRAINING')
+        calculate_pre_training(examples_pre_training, labels_pre_training)
+        print('FINISHED PRE TRAINING')
     
     if "saved_evaluation_dataset_training.npy" not in os.listdir("/content/drive/My Drive/544_Final_Project/"):
         examples, labels = load_evaluation_dataset.read_data('/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/EvaluationDataset', type="training0")
@@ -572,89 +573,88 @@ if __name__ == '__main__':
             conf_mat_test1.append(metrics[11])
     
         with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/cnn_evaluation_dataset_target_patient_dependent.txt", "a") as myfile:
+            myfile.write("--- RAW, CNN, PATIENT DEPENDENT ---")
             myfile.write("ConvNet Training Cycle : " + str(training_cycle) + "\n\n")
             myfile.write("TEST 0: \n")
             myfile.write("Accuracy: \n")
             #myfile.write(str(accuracy1_test0) + '\n')
-            myfile.write(str(np.mean(accuracy1_test0, axis=0)) + '\n')
+            #myfile.write(str(np.mean(accuracy1_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(accuracy1_test0)) + '\n')
 
             myfile.write("Balanced Accuracy: \n")
-            myfile.write(str(bal_acc_test0) + '\n')
+            #myfile.write(str(bal_acc_test0) + '\n')
             #myfile.write(str(np.mean(bal_acc_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(bal_acc_test0)) + '\n')
 
             myfile.write("Precision: \n")
             #myfile.write(str(precision_test0) + '\n')
-            myfile.write(str(np.mean(precision_test0, axis=0)) + '\n')
+            #myfile.write(str(np.mean(precision_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(precision_test0)) + '\n')
 
             myfile.write("Recall: \n")
             #myfile.write(str(recall_test0) + '\n')
-            myfile.write(str(np.mean(recall_test0, axis=0)) + '\n')
+            #myfile.write(str(np.mean(recall_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(recall_test0)) + '\n')
 
             myfile.write("F1 Score: \n")
             #myfile.write(str(f1_test0) + '\n')
-            myfile.write(str(np.mean(f1_test0, axis=0)) + '\n')
+            #myfile.write(str(np.mean(f1_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(f1_test0)) + '\n')
 
             myfile.write("Confusion Matrices: \n")
             #myfile.write(str(conf_mat_test0) + '\n')
             myfile.write(str(np.array(np.mean(conf_mat_test0, axis=0))) + '\n')
-            myfile.write(str(np.array(np.mean(np.mean(conf_mat_test0, axis=0), axis=0))) + '\n')
 
             myfile.write("Test 1: \n")
             myfile.write("Accuracy: \n")
             #myfile.write(str(accuracy1_test1) + '\n')
-            myfile.write(str(np.mean(accuracy1_test1, axis=0)) + '\n')
+            #myfile.write(str(np.mean(accuracy1_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(accuracy1_test1)) + '\n')
 
             myfile.write("Balanced Accuracy: \n")
             #myfile.write(str(bal_acc_test1) + '\n')
-            myfile.write(str(np.mean(bal_acc_test1, axis=0)) + '\n')
+            #myfile.write(str(np.mean(bal_acc_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(bal_acc_test1)) + '\n')
 
             myfile.write("Precision: \n")
             #myfile.write(str(precision_test1) + '\n')
-            myfile.write(str(np.mean(precision_test1, axis=0)) + '\n')
+            #myfile.write(str(np.mean(precision_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(precision_test1)) + '\n')
 
             myfile.write("Recall: \n")
             #myfile.write(str(recall_test1) + '\n')
-            myfile.write(str(np.mean(recall_test1, axis=0)) + '\n')
+            #myfile.write(str(np.mean(recall_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(recall_test1)) + '\n')
 
             myfile.write("F1 Score: \n")
             #myfile.write(str(f1_test1) + '\n')
-            myfile.write(str(np.mean(f1_test1, axis=0)) + '\n')
+            #myfile.write(str(np.mean(f1_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(f1_test1)) + '\n')
 
             myfile.write("Confusion Matrices: \n")
             #myfile.write(str(conf_mat_test1) + '\n')
             myfile.write(str(np.array(np.mean(conf_mat_test1, axis=0))) + '\n')
-            myfile.write(str(np.array(np.mean(np.mean(conf_mat_test1, axis=0), axis=0))) + '\n')
             myfile.write("\n\n\n")
 
-            myfile.write("AVERAGE OVER BOTH TESTS: \n")
+            myfile.write("AVERAGE OF BOTH: \n")
             myfile.write("Accuracy: \n")
-            myfile.write(str(np.mean(accuracy1_test1.extend(accuracy1_test0))) + '\n')
+            myfile.write(str(np.mean([np.mean(accuracy1_test1), np.mean(accuracy1_test0)])) + '\n')
 
             myfile.write("Balanced Accuracy: \n")
-            myfile.write(str(np.mean(bal_acc_test1.extend(bal_acc_test0))) + '\n')
+            myfile.write(str(np.mean([np.mean(bal_acc_test1), np.mean(bal_acc_test0)])) + '\n')
 
             myfile.write("Precision: \n")
-            myfile.write(str(np.mean(precision_test1.extend(precision_test0))) + '\n')
+            myfile.write(str(np.mean([np.mean(precision_test0), np.mean(precision_test1)])) + '\n')
 
             myfile.write("Recall: \n")
-            myfile.write(str(np.mean(recall_test1.extend(recall_test0))) + '\n')
+            myfile.write(str(np.mean([np.mean(recall_test0), np.mean(recall_test1)])) + '\n')
 
             myfile.write("F1 Score: \n")
-            myfile.write(str(np.mean(f1_test1.extend(f1_test0))) + '\n')
-
-            myfile.write("Confusion Matrices: \n")
-            conf_mat = []
-            conf_mat[0] = np.array(np.mean(np.mean(conf_mat_test1, axis=0), axis=0))
-            conf_mat[1] = np.array(np.mean(np.mean(conf_mat_test0, axis=0), axis=0))
-            myfile.write(str(np.array(np.mean(conf_mat, axis=0))) + '\n')
+            myfile.write(str(np.mean([np.mean(f1_test0), np.mean(f1_test0)])) + '\n')
             myfile.write("\n\n\n")
+
+        import pickle
+        with open('/content/drive/My Drive/544_Final_Project/conf_mat0.pkl', 'wb') as f:
+            pickle.dump(np.mean(conf_mat_test0, axis=0), f)
+        with open('/content/drive/My Drive/544_Final_Project/conf_mat1.pkl', 'wb') as f:
+            pickle.dump(np.mean(conf_mat_test1, axis=0), f)
