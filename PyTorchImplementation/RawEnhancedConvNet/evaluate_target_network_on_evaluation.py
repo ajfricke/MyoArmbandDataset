@@ -535,7 +535,7 @@ if __name__ == '__main__':
     array_validation_error = []
     # learning_rate=0.002335721469090121 (for network enhanced)
 
-    with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/cnn_evaluation_dataset_target_patient_dependent.txt", "a") as myfile:
+    with open("/content/drive/My Drive/544_Final_Project/cnn_evaluation_dataset_target_patient_dependent.txt", "a") as myfile:
         myfile.write("Test")
     for training_cycle in range(4, 5):
         print(f"\n--- TRAINING CYCLE {training_cycle} of 4 ---")
@@ -573,67 +573,40 @@ if __name__ == '__main__':
             conf_mat_test1.append(metrics[11])
     
         with open("/content/drive/My Drive/544_Final_Project/MyoArmbandDataset/PyTorchImplementation/results/cnn_evaluation_dataset_target_patient_dependent.txt", "a") as myfile:
-            myfile.write("--- RAW, CNN, PATIENT DEPENDENT ---")
+            myfile.write("--- RAW, CNN, PATIENT DEPENDENT TARGET ---")
             myfile.write("ConvNet Training Cycle : " + str(training_cycle) + "\n\n")
             myfile.write("TEST 0: \n")
             myfile.write("Accuracy: \n")
-            #myfile.write(str(accuracy1_test0) + '\n')
-            #myfile.write(str(np.mean(accuracy1_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(accuracy1_test0)) + '\n')
 
             myfile.write("Balanced Accuracy: \n")
-            #myfile.write(str(bal_acc_test0) + '\n')
-            #myfile.write(str(np.mean(bal_acc_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(bal_acc_test0)) + '\n')
 
             myfile.write("Precision: \n")
-            #myfile.write(str(precision_test0) + '\n')
-            #myfile.write(str(np.mean(precision_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(precision_test0)) + '\n')
 
             myfile.write("Recall: \n")
-            #myfile.write(str(recall_test0) + '\n')
-            #myfile.write(str(np.mean(recall_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(recall_test0)) + '\n')
 
             myfile.write("F1 Score: \n")
-            #myfile.write(str(f1_test0) + '\n')
-            #myfile.write(str(np.mean(f1_test0, axis=0)) + '\n')
             myfile.write(str(np.mean(f1_test0)) + '\n')
-
-            myfile.write("Confusion Matrices: \n")
-            #myfile.write(str(conf_mat_test0) + '\n')
-            myfile.write(str(np.array(np.mean(conf_mat_test0, axis=0))) + '\n')
+            myfile.write("\n\n\n")
 
             myfile.write("Test 1: \n")
             myfile.write("Accuracy: \n")
-            #myfile.write(str(accuracy1_test1) + '\n')
-            #myfile.write(str(np.mean(accuracy1_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(accuracy1_test1)) + '\n')
 
             myfile.write("Balanced Accuracy: \n")
-            #myfile.write(str(bal_acc_test1) + '\n')
-            #myfile.write(str(np.mean(bal_acc_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(bal_acc_test1)) + '\n')
 
             myfile.write("Precision: \n")
-            #myfile.write(str(precision_test1) + '\n')
-            #myfile.write(str(np.mean(precision_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(precision_test1)) + '\n')
 
             myfile.write("Recall: \n")
-            #myfile.write(str(recall_test1) + '\n')
-            #myfile.write(str(np.mean(recall_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(recall_test1)) + '\n')
 
             myfile.write("F1 Score: \n")
-            #myfile.write(str(f1_test1) + '\n')
-            #myfile.write(str(np.mean(f1_test1, axis=0)) + '\n')
             myfile.write(str(np.mean(f1_test1)) + '\n')
-
-            myfile.write("Confusion Matrices: \n")
-            #myfile.write(str(conf_mat_test1) + '\n')
-            myfile.write(str(np.array(np.mean(conf_mat_test1, axis=0))) + '\n')
             myfile.write("\n\n\n")
 
             myfile.write("AVERAGE OF BOTH: \n")
