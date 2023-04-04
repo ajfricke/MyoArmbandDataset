@@ -146,7 +146,7 @@ def calculate_fitness(examples_training, labels_training, examples_test0, labels
     return (accuracy_test, bal_acc_test, precision_test, recall_test, f1_test, conf_mat_test)
 
 
-def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=25, precision=1e-8):
+def train_model(cnn, criterion, optimizer, scheduler, dataloaders, num_epochs=500, precision=1e-8):
     best_loss = float('inf')
     
     patience = 30
